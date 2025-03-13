@@ -10,6 +10,10 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements-api.txt
 
+RUN apt-get update && apt-get install -y curl
+
+RUN curl -L -o /app/yolo.pth "https://drive.google.com/uc?export=download&id=1DPp9AWrOvUwj0NiO-2qAU19zck8Vcftp"
+
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
 
@@ -17,4 +21,5 @@ EXPOSE 5000
 ENV FLASK_ENV=production
 
 # Run mnist_api.py when the container launches
-CMD ["python", "MNIST/mnist_api.py", "--model_path", "MNIST/weights/mnist_net.pth"]
+# CMD ["ls", "/app/"]
+CMD ["python", "movies_api.py"]

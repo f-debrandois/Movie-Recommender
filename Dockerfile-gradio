@@ -17,5 +17,5 @@ EXPOSE 7860
 ENV FLASK_ENV=production
 
 # Run mnist_api.py when the container launches
-CMD ["sh", "-c", "echo 'Starting Gradio' && python -u MNIST/mnist_webapp.py"]
+CMD ["sh", "-c", "echo 'Starting Gradio' && python -u movies_webapp.py"]
 

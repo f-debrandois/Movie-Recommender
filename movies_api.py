@@ -4,19 +4,19 @@ import torchvision.transforms as transforms
 from flask import Flask, jsonify, request
 from PIL import Image
 import io
-from model import MNISTNet
+from ultralytics import YOLO
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 app = Flask(__name__)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default='model.pth')
+parser.add_argument('--model_path', type=str, default='yolo.pth')
 args = parser.parse_args()
 model_path = args.model_path
 
 # TODO : LOAD THE MODEL
-model_genre = MNISTNet().to(device)
+model_genre = YOLO().to(device)
 
 # Load the model
 model_genre.load_state_dict(torch.load(model_path, map_location=device))
@@ -24,13 +24,13 @@ model_genre.eval()
 
 # TODO : DEFINE THE TRANSFORM
 transform = transforms.Compose([
-    transforms.Resize((28, 28)),
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize((0.5,), (0.5,))
 ])
 
-@app.route('/predict_genre', methods=['POST'])
-def predict_genre():
+@app.route('/predict', methods=['POST'])
+def predict():
     img_binary = request.data
     img_pil = Image.open(io.BytesIO(img_binary))
 
