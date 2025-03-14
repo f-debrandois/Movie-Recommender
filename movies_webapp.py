@@ -9,11 +9,9 @@ import matplotlib.pyplot as plt
 
 
 
-def recognize_digit(image):
-    # Convert to PIL Image necessary if using the API method
-    # print(image.keys())
-    # image = image['composite']    
-    # image = image[:,:,3]
+def recognize_genre(image):
+    if image == None:
+        return "No image"
     image = Image.fromarray(image.astype('uint8'))
     img_binary = io.BytesIO()
     image.save(img_binary, format="PNG")
@@ -25,7 +23,7 @@ def recognize_digit(image):
 if __name__=='__main__':
 
 
-    gr.Interface(fn=recognize_digit, 
+    gr.Interface(fn=recognize_genre, 
                 inputs="image",
                 outputs='label',
                 live=True,
