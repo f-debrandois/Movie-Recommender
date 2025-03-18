@@ -1,0 +1,16 @@
+services:
+  gradio-app:
+    build:
+      context: .
+      dockerfile: Dockerfile-gradio
+    ports:
+      - "7860:7860"
+    depends_on:
+      - model_api
+
+  model_api:
+    build:
+      context: .
+      dockerfile: Dockerfile-api
+    ports:
+      - "5000:5000"
