@@ -1,3 +1,4 @@
 tests/
-classification/preprocessing/transforms.py
+classification/transforms.py
+classification/Dimension_resize_finding.ipynb
 Dataset/
