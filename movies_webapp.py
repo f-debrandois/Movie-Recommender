@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 def recognize_genre(image):
-    if image == None:
+    if image is None:
         return "No image"
     image = Image.fromarray(image.astype('uint8'))
     img_binary = io.BytesIO()
