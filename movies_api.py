@@ -4,30 +4,34 @@ import torchvision.transforms as transforms
 from flask import Flask, jsonify, request
 from PIL import Image
 import io
-from ultralytics import YOLO
+import torchvision
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 app = Flask(__name__)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default='yolo.pt')
+parser.add_argument('--model_path', type=str, default='weight.pth')
 args = parser.parse_args()
 model_path = args.model_path
 
-# TODO : LOAD THE MODEL
-# model_genre = YOLO().to(device)
-model_genre = model = YOLO(model_path).to(device)
+dict_genres = {0: 'Horreur', 1: 'Animation', 2: 'Action', 3: 'Fantasy', 4: 'Science-Fiction', 5: 'Thriller', 6: 'Drama', 7: 'Romance', 8: 'Comedy', 9: 'Documentary'}
+num_classes = len(dict_genres)
+
+# LOAD THE MODEL
+model_genre = torchvision.models.resnet18()
+model_genre.fc = torch.nn.Linear(in_features=512, out_features=num_classes)
+model_genre.to(device)
 
 # Load the model
-# model_genre.load_state_dict(torch.load(model_path, map_location=device))
+model_genre.load_state_dict(torch.load(model_path, map_location=device))
 model_genre.eval()
 
-# TODO : DEFINE THE TRANSFORM
+# DEFINE THE TRANSFORM
 transform = transforms.Compose([
-    transforms.Resize((640, 640)),
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    # transforms.Normalize((0.5,), (0.5,))
+    transforms.Normalize((0.5,), (0.5,))
 ])
 
 @app.route('/predict', methods=['POST'])
@@ -42,9 +46,8 @@ def predict():
     # Make prediction
     with torch.no_grad():
         outputs = model_genre(tensor)
-        # _, predicted = outputs.max(1)
-        predicted = outputs[0].probs.top1
-    label = outputs[0].names[predicted]
+        _, predicted = torch.max(outputs, 1)
+    label = dict_genres[predicted.item()]
     return jsonify({"prediction": label})
 
 # @app.route('/batch_predict', methods=['POST'])

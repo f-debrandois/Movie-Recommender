@@ -12,7 +12,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements-api.txt
 
 RUN apt-get update && apt-get install -y curl libglib2.0-0 libglib2.0-dev libgl1-mesa-glx
 
-RUN curl -L -o /app/yolo.pt "https://drive.google.com/uc?export=download&id=1DPp9AWrOvUwj0NiO-2qAU19zck8Vcftp"
+RUN curl -L -o /app/weight.pt "https://drive.google.com/uc?export=download&id=1DPp9AWrOvUwj0NiO-2qAU19zck8Vcftp"
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
