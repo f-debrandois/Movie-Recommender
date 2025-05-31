@@ -5,6 +5,8 @@ from flask import Flask, jsonify, request
 from PIL import Image
 import io
 import torchvision
+from annoy import AnnoyIndex
+import pandas as pd
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -34,6 +36,13 @@ transform = transforms.Compose([
     transforms.Normalize((0.5,), (0.5,))
 ])
 
+# Annoy index for recommendations
+annoy_index = AnnoyIndex(512, 'angular')
+# Load the Annoy index
+annoy_index.load('annoy_index_poster.ann')
+# load df path movies
+movies_path = pd.read_csv('movie_paths.csv')
+
 @app.route('/predict', methods=['POST'])
 def predict():
     img_binary = request.data
@@ -49,6 +58,18 @@ def predict():
         _, predicted = torch.max(outputs, 1)
     label = dict_genres[predicted.item()]
     return jsonify({"prediction": label})
+
+@app.route('/recommender', methods=['POST'])
+def recommender():
+    dict_embedding = request.get_json()
+    embedding = dict_embedding["features"]
+    # Find in the Annoy index
+    indices = annoy_index.get_nns_by_vector(embedding, 5)
+    recommendations = movies_path.iloc[indices,0].to_list()
+    return jsonify({"recommendations": recommendations})
+
+    
+        
 
 # @app.route('/batch_predict', methods=['POST'])
 # def batch_predict():

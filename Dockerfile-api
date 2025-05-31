@@ -7,12 +7,22 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
+
+RUN apt-get update && apt-get install -y curl build-essential
+
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements-api.txt
 
-RUN apt-get update && apt-get install -y curl libglib2.0-0 libglib2.0-dev libgl1-mesa-glx
+# libglib2.0-0 libglib2.0-dev libgl1-mesa-glx
 
-RUN curl -L -o /app/weight.pt "https://drive.google.com/uc?export=download&id=1DPp9AWrOvUwj0NiO-2qAU19zck8Vcftp"
+# RUN curl -L -o /app/weight.pt "https://drive.google.com/uc?export=download&id=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq"
+
+# Téléchargement du fichier Drive (avec confirmation)
+RUN FILE_ID=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq && \
+    FILE_NAME=/app/weight.pth && \
+    curl -c /tmp/cookies "https://drive.google.com/uc?export=download&id=${FILE_ID}" > /tmp/interm.html && \
+    CONFIRM=$(grep -o 'confirm=[^&]*' /tmp/interm.html | sed 's/confirm=//') && \
+    curl -Lb /tmp/cookies "https://drive.google.com/uc?export=download&confirm=${CONFIRM}&id=${FILE_ID}" -o ${FILE_NAME}
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
