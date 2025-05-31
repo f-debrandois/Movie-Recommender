@@ -5,37 +5,18 @@ from flask import Flask, jsonify, request
 from PIL import Image
 import io
 import torchvision
+from annoy import AnnoyIndex
+import pandas as pd
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 app = Flask(__name__)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default='weight.pth')
-args = parser.parse_args()
-model_path = args.model_path
-
-dict_genres = {0: 'Horreur', 1: 'Animation', 2: 'Action', 3: 'Fantasy', 4: 'Science-Fiction', 5: 'Thriller', 6: 'Drama', 7: 'Romance', 8: 'Comedy', 9: 'Documentary'}
-num_classes = len(dict_genres)
-
-# LOAD THE MODEL
-model_genre = torchvision.models.resnet18()
-model_genre.fc = torch.nn.Linear(in_features=512, out_features=num_classes)
-model_genre.to(device)
-
-# Load the model
-model_genre.load_state_dict(torch.load(model_path, map_location=device))
-model_genre.eval()
-
-# DEFINE THE TRANSFORM
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
-])
-
 @app.route('/predict', methods=['POST'])
 def predict():
+    '''
+    Function to predict the genre of a movie based on the image.
+    '''
     img_binary = request.data
     img_pil = Image.open(io.BytesIO(img_binary))
 
@@ -50,27 +31,87 @@ def predict():
     label = dict_genres[predicted.item()]
     return jsonify({"prediction": label})
 
-# @app.route('/batch_predict', methods=['POST'])
-# def batch_predict():
-#     # Get the image data from the request
-#     images_binary = request.files.getlist("images[]")
+@app.route('/recommender', methods=['POST'])
+def recommender():
+    '''
+    Function to recommend movies based on the embedding using the Annoy index.
+    '''
+    dict_embedding = request.get_json()
+    embedding = dict_embedding["features"]
+    # Find in the Annoy index
+    indices = annoy_index_poster.get_nns_by_vector(embedding, 5)
+    recommendations = movies_path.iloc[indices,0].to_list()
+    return jsonify({"recommendations": recommendations})
 
-#     tensors = []
+def plot_recommender(embedding, annoy_index):
+    '''
+    Function to recommend plots based on the embedding using the specified Annoy index.
+    '''
+    # Find in the Annoy index
+    indices = annoy_index.get_nns_by_vector(embedding, 5)
+    recommendations = plots_path.iloc[indices,0].to_list()
+    return jsonify({"recommendations": recommendations})
 
-#     for img_binary in images_binary:
-#         img_pil = Image.open(img_binary.stream)
-#         tensor = transform(img_pil)
-#         tensors.append(tensor)
+@app.route('/plot_recommender_bow', methods=['POST'])
+def plot_recommender_bow():
+    '''
+    Function to recommend plots based on the embedding using the bag of words Annoy index.
+    '''
+    dict_embedding = request.get_json()
+    embedding = dict_embedding["features"]
+    print("Received embedding for plot recommendation:", embedding)
+    # Find in the Annoy index
+    return plot_recommender(embedding, annoy_index_bow)
 
-#     # Stack tensors to form a batch tensor
-#     batch_tensor = torch.stack(tensors, dim=0)
 
-#     # Make prediction
-#     with torch.no_grad():
-#         outputs = model(batch_tensor.to(device))
-#         _, predictions = outputs.max(1)
+@app.route('/plot_recommender_glove', methods=['POST'])
+def plot_recommender_glove():
+    '''
+    Function to recommend plots based on the embedding using the glove Annoy index.
+    '''
+    dict_embedding = request.get_json()
+    embedding = dict_embedding["features"]
+    # Find in the Annoy index
+    return plot_recommender(embedding, annoy_index_glove)
 
-#     return jsonify({"predictions": predictions.tolist()})
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_path', type=str, default='api_utils/weight.pth')
+    args = parser.parse_args()
+    model_path = args.model_path
+
+    dict_genres = {0: 'Horreur', 1: 'Animation', 2: 'Action', 3: 'Fantasy', 4: 'Science-Fiction', 5: 'Thriller', 6: 'Drama', 7: 'Romance', 8: 'Comedy', 9: 'Documentary'}
+    num_classes = len(dict_genres)
+
+    # LOAD THE MODEL
+    model_genre = torchvision.models.resnet18()
+    model_genre.fc = torch.nn.Linear(in_features=512, out_features=num_classes)
+    model_genre.to(device)
+    model_genre.load_state_dict(torch.load(model_path, map_location=device))
+    model_genre.eval()
+
+    # Transform for the input image
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+
+    # Load Annoy index for poster recommendations
+    annoy_index_poster = AnnoyIndex(512, 'angular')
+    annoy_index_poster.load('api_utils/annoy_index_poster.ann')
+    movies_path = pd.read_csv('api_utils/movie_paths.csv')
+
+    # Load Annoy index for plot recommendations with bag of words
+    annoy_index_bow = AnnoyIndex(53363, 'angular')
+    annoy_index_bow.load('api_utils/annoy_index_bag_of_words.ann')
+    plots_path = pd.read_csv('api_utils/plot_titles.csv')
+
+    # # Load Annoy index for plot recommendations wiith glove
+    # annoy_index_bow = AnnoyIndex(?, 'angular')
+    # annoy_index_bow.load('annoy_index_glove.ann')
+    # plots_path = pd.read_csv('plot_titles.csv')
+
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -9,6 +9,8 @@ sudo docker-compose stop
 sudo docker-compose down
 ### clean
 sudo docker builder prune
+docker system prune -a --volumes
+
 
 ## logs d'un docker
 sudo docker-compose logs -f model_api
