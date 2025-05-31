@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import torch
 import torchvision
 import torchvision.transforms as transforms
+import joblib
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -18,6 +19,9 @@ model_path = args.model_path
 
 
 def recognize_genre(image):
+    '''
+    Function to recognize the genre of a movie poster using a pre-trained model.
+    '''
     if image is None:
         return "No image"
     image = Image.fromarray(image.astype('uint8'))
@@ -29,6 +33,9 @@ def recognize_genre(image):
     return predicted_label
 
 def recommender_model(image):
+    '''
+    Function to load the recommender model and define the transformation for the input image.
+    '''
     model_genre = torchvision.models.resnet18()
     model_genre.fc = torch.nn.Linear(in_features=512, out_features=10)
     model_genre.load_state_dict(torch.load(model_path, map_location=device))
@@ -47,18 +54,14 @@ def recommender_model(image):
     return model_reco, transform
 
 def recommender(image):
-    # afficher ls dans le dossier
-    import os
-    files = os.listdir('.')
-    print("Files in the current directory:", files)
-
+    '''
+    Function to recommend movies based on the input image.
+    '''
     if image is None:
         return "No image"
         
     model_reco, transform = recommender_model(image)
     image = Image.fromarray(image.astype('uint8'))
-    # img_binary = io.BytesIO()
-    # img_pil = Image.open(io.BytesIO(img_binary))
 
     # Transform the PIL image
     tensor = transform(image).to(device)
@@ -74,6 +77,29 @@ def recommender(image):
     if not predicted_label:
         return "No recommendations found"
     return predicted_label
+
+def plot_recommender(plot, embedding_method):
+    '''
+    Function to recommend movies based on the input plot.
+    '''
+    if plot is None:
+        return "No plot"
+    
+    if embedding_method == "Bag of words":
+        # load vectorizer
+        vectorizer = joblib.load('vectorizer_bow.pkl')
+        # Transform the plot using the vectorizer
+        plot_vectorized = vectorizer.transform([plot]).toarray().tolist()[0]
+        response = requests.post("http://model_api:5000/plot_recommender_bow", json={"features" : plot_vectorized})
+
+    # elif embedding_method == "glove":
+    #     # load glove model
+
+    #     response = requests.post("http://model_api:5000/plot_recommender_glove", json={"features" : plot})
+
+    movies_recommended = response.json()["recommendations"]
+    return gr.update(value="\n".join(movies_recommended), visible=True) if movies_recommended else gr.update(value="No recommendations found", visible=True)
+
 
 def handle_action(image, choice):
     if choice == "Prédire le genre":
@@ -108,7 +134,7 @@ if __name__=='__main__':
 
         gr.Markdown("## 🎥 Analyse de Poster de Film")
 
-        with gr.Row():
+        with gr.Tab("Classification"):
             image_input = gr.Image(type="numpy")
 
             action_choice = gr.Radio(
@@ -117,11 +143,26 @@ if __name__=='__main__':
                 value="Prédire le genre"
             )
 
-        genre_output = gr.Textbox(label="Résultat", lines=5, visible=False)
-        reco_gallery = gr.Gallery(label="Films recommandés", visible=False, columns=3, elem_classes="small-image")
+            genre_output = gr.Textbox(label="Résultat", lines=1, visible=False)
+            reco_gallery = gr.Gallery(label="Films recommandés", visible=False, columns=3, elem_classes="small-image")
 
-        run_button = gr.Button("Exécuter")
-        run_button.click(fn=handle_action, inputs=[image_input, action_choice], outputs=[genre_output, reco_gallery])
+            run_button = gr.Button("Exécuter")
+            run_button.click(fn=handle_action, inputs=[image_input, action_choice], outputs=[genre_output, reco_gallery])
+
+        with gr.Tab("Synopsis"):
+            gr.Markdown("### Recommander des films en fonction du synopsis")
+            plot_input = gr.Textbox(label="Entrez le synopsis du film", placeholder="Tapez le synopsis ici...", lines=5)
+
+            action_choice_plot = gr.Radio(
+                choices=["Bag of words", "Glove"],
+                label="Choisissez la méthode d'embedding",
+                value="Bag of words"
+            )
+
+            plot_reco_output = gr.Textbox(label="Résultat", lines=5, visible=False)
+
+            run_button = gr.Button("Exécuter")
+            run_button.click(fn=plot_recommender, inputs=[plot_input, action_choice_plot], outputs=plot_reco_output)
 
         
 
