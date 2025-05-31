@@ -78,7 +78,7 @@ def plot_recommender_glove():
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', type=str, default='weight.pth')
+    parser.add_argument('--model_path', type=str, default='api_utils/weight.pth')
     args = parser.parse_args()
     model_path = args.model_path
 
@@ -101,13 +101,13 @@ if __name__ == "__main__":
 
     # Load Annoy index for poster recommendations
     annoy_index_poster = AnnoyIndex(512, 'angular')
-    annoy_index_poster.load('annoy_index_poster.ann')
-    movies_path = pd.read_csv('movie_paths.csv')
+    annoy_index_poster.load('api_utils/annoy_index_poster.ann')
+    movies_path = pd.read_csv('api_utils/movie_paths.csv')
 
     # Load Annoy index for plot recommendations with bag of words
     annoy_index_bow = AnnoyIndex(53363, 'angular')
-    annoy_index_bow.load('annoy_index_bag_of_words.ann')
-    plots_path = pd.read_csv('plot_titles.csv')
+    annoy_index_bow.load('api_utils/annoy_index_bag_of_words.ann')
+    plots_path = pd.read_csv('api_utils/plot_titles.csv')
 
     # # Load Annoy index for plot recommendations wiith glove
     # annoy_index_bow = AnnoyIndex(?, 'angular')

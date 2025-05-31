@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . /app
 
 
-RUN apt-get update && apt-get install -y curl build-essential 
+RUN apt-get update && apt-get install -y unzip curl build-essential 
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements-api.txt
@@ -18,8 +18,9 @@ RUN pip install --trusted-host pypi.python.org -r requirements-api.txt
 # RUN curl -L -o /app/weight.pt "https://drive.google.com/uc?export=download&id=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq"
 
 # Téléchargement du fichier Drive (avec confirmation)
-RUN gdown https://drive.google.com/uc?id=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq -O weight.pth
-
+# RUN gdown https://drive.google.com/uc?id=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq -O weight.pth
+RUN gdown https://drive.google.com/uc?id=1sQP63eNxCy6ongNt9C9ID28ACK_R2KW2 -O api_utils.zip
+RUN unzip api_utils.zip && rm api_utils.zip
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
