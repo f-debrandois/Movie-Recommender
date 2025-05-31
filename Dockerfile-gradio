@@ -17,7 +17,9 @@ RUN pip install --trusted-host pypi.python.org -r requirements-gradio.txt
 
 # RUN curl -L -o /app/weight.pth "https://drive.google.com/uc?export=download&id=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq"
 # Téléchargement du fichier Drive (avec confirmation)
-RUN gdown https://drive.google.com/uc?id=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq -O weight.pth
+# RUN gdown https://drive.google.com/uc?id=1kUCA6p_S5Xt6ARF-wiBBjcrXfSaJ25tq -O weight.pth
+RUN gdown https://drive.google.com/uc?id=1pxKJRSOkTCRtFu4Lxjar-25V4VlX2swL -O app_utils.zip
+RUN unzip app_utils.zip && rm app_utils.zip
 
 RUN gdown https://drive.google.com/uc?id=1-1OSGlN2EOqyZuehBgpgI8FNOtK-caYf -O data.zip
 RUN unzip data.zip && rm data.zip

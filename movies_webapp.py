@@ -13,7 +13,7 @@ import joblib
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default='weight.pth')
+parser.add_argument('--model_path', type=str, default='app_utils/weight.pth')
 args = parser.parse_args()
 model_path = args.model_path
 
@@ -87,7 +87,7 @@ def plot_recommender(plot, embedding_method):
     
     if embedding_method == "Bag of words":
         # load vectorizer
-        vectorizer = joblib.load('vectorizer_bow.pkl')
+        vectorizer = joblib.load('app_utils/vectorizer_bow.pkl')
         # Transform the plot using the vectorizer
         plot_vectorized = vectorizer.transform([plot]).toarray().tolist()[0]
         response = requests.post("http://model_api:5000/plot_recommender_bow", json={"features" : plot_vectorized})
