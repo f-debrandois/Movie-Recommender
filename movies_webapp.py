@@ -47,6 +47,11 @@ def recommender_model(image):
     return model_reco, transform
 
 def recommender(image):
+    # afficher ls dans le dossier
+    import os
+    files = os.listdir('.')
+    print("Files in the current directory:", files)
+
     if image is None:
         return "No image"
         
